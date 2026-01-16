@@ -1,0 +1,38 @@
+{
+  "name": "@anvitra-ai/shilp-sdk-ts",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for Shilp Vector Database API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "shilp",
+    "vector-database",
+    "sdk",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anvitra-ai/shilp-sdk-ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/anvitra-ai/shilp-sdk-ts/issues"
+  },
+  "homepage": "https://github.com/anvitra-ai/shilp-sdk-ts#readme",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/node": "^25.0.9",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "form-data": "^4.0.5"
+  }
+}
