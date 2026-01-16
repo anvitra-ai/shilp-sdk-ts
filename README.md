@@ -26,7 +26,12 @@ async function main() {
   console.log("Collections:", collections.data);
 
   // Drop collection if exists
-  await client.dropCollection("my-collection");
+
+  try {
+    await client.dropCollection("my-collection");
+  } catch (error) {
+    console.error("Error dropping collection:", error);
+  }
 
   // Create a new collection
   await client.addCollection({
@@ -39,8 +44,8 @@ async function main() {
     id: "record-1",
     record: {
       title: "Hello World",
-      vector: [0.1, 0.2, 0.3],
     },
+    fields: ["title"],
   });
 
   // Flush collection in case you are using insert record.
@@ -89,7 +94,11 @@ const nodes = await client.getCollectionNodesAtLevel("my-collection", 0);
 console.log("Nodes:", nodes.data);
 
 // Get node information
-const nodeInfo = await client.getCollectionNodeInfo("my-collection", "title", 123);
+const nodeInfo = await client.getCollectionNodeInfo(
+  "my-collection",
+  "title",
+  123
+);
 console.log("Node info:", nodeInfo.data);
 
 // Get neighbors of a node at a specific level
@@ -113,7 +122,10 @@ const distance = await client.getCollectionDistance(
 console.log("Distance:", distance.data);
 
 // Get node by reference ID
-const refNode = await client.getCollectionNodeByReferenceNodeID("my-collection", 456);
+const refNode = await client.getCollectionNodeByReferenceNodeID(
+  "my-collection",
+  456
+);
 console.log("Reference node:", refNode.data);
 ```
 
@@ -138,17 +150,25 @@ console.log("Registered replica:", registerResp.message);
 
 // Get oplog status for a collection
 const status = await client.getOplogStatus("my-collection");
-console.log(`Oplog status - Last LSN: ${status.last_lsn}, Retention LSN: ${status.retention_lsn}, Replicas: ${status.replica_count}`);
+console.log(
+  `Oplog status - Last LSN: ${status.last_lsn}, Retention LSN: ${status.retention_lsn}, Replicas: ${status.replica_count}`
+);
 
 // Get oplog entries after a specific LSN
 const entries = await client.getOplogEntries("my-collection", 1000, 100);
-console.log(`Retrieved ${entries.count} oplog entries, last LSN: ${entries.last_lsn}`);
+console.log(
+  `Retrieved ${entries.count} oplog entries, last LSN: ${entries.last_lsn}`
+);
 
 // Get oplog entries for all collections
 const allEntries = await client.getOplogEntries("", 1000, 100);
 
 // Update replica LSN (heartbeat)
-const updateResp = await client.updateReplicaLSN("my-collection", "replica-1", 1050);
+const updateResp = await client.updateReplicaLSN(
+  "my-collection",
+  "replica-1",
+  1050
+);
 console.log(`Updated replica LSN: ${updateResp.success}`);
 ```
 
@@ -159,4 +179,3 @@ For more details on the Shilp Vector Database API, please refer to the [official
 ## License
 
 ISC
-
