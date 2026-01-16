@@ -1,4 +1,4 @@
-import { ShilpClient } from "./dist/index";
+import { ShilpClient } from "./dist/index.js";
 
 async function main() {
   // Initialize the client
@@ -28,8 +28,8 @@ async function main() {
       id: "record-1",
       record: {
         title: "Hello World",
-        vector: [0.1, 0.2, 0.3],
       },
+      fields: ["title"],
     });
     console.log("Record inserted:", insertResp.success);
 
