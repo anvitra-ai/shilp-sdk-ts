@@ -10,6 +10,10 @@ import {
   ListStorageResponse,
   ReadDocumentResponse,
   ListEmbeddingModelsResponse,
+  ListIngestionSourcesResponse,
+  FileReaderOptions,
+  IngestSourceType,
+  GenericResponse,
 } from "./models";
 
 /**
@@ -33,9 +37,19 @@ export class DataMixin extends Client {
 
   /**
    * Lists contents of a directory in uploads storage
+   * If the source is mongodb, then empty path lists all DBs. If path is a DB, lists all collections in that DB.
    */
-  async listStorage(path?: string): Promise<ListStorageResponse> {
-    const queryParams = path ? { path } : undefined;
+  async listStorage(
+    path?: string,
+    source?: IngestSourceType
+  ): Promise<ListStorageResponse> {
+    const queryParams: Record<string, string> = {};
+    if (path) {
+      queryParams.path = path;
+    }
+    if (source) {
+      queryParams.source = source;
+    }
     return this.doRequest<ListStorageResponse>(
       "GET",
       "/api/data/v1/storage/list",
@@ -45,29 +59,59 @@ export class DataMixin extends Client {
   }
 
   /**
-   * Reads the first few rows of a CSV document
+   * Lists available ingestion sources
+   */
+  async listIngestSources(): Promise<ListIngestionSourcesResponse> {
+    return this.doRequest<ListIngestionSourcesResponse>(
+      "GET",
+      "/api/data/v1/ingest/sources"
+    );
+  }
+
+  /**
+   * Reads the first few rows of a CSV document or MongoDB collection
+   * If the source is mongodb, then path is in the format "database/collection"
+   * options.mongo_filter can be used to filter the documents returned in case of mongodb
    */
   async readDocument(
     path: string,
-    rows?: number,
-    skip?: number
+    options: FileReaderOptions = {}
   ): Promise<ReadDocumentResponse> {
     if (!path) {
       throw new Error("path cannot be empty");
     }
-    if (rows !== undefined && rows < 0) {
+
+    const rows = options.limit ?? 0;
+    if (rows < 0) {
       throw new Error("rows cannot be negative");
     }
-    if (skip !== undefined && skip < 0) {
+
+    const skip = options.skip ?? 0;
+    if (skip < 0) {
       throw new Error("skip cannot be negative");
     }
 
-    const queryParams: Record<string, string> = { path };
-    if (rows !== undefined && rows > 0) {
+    if (options.source === IngestSourceType.MongoDB && path.split("/").length !== 2) {
+      throw new Error("for mongodb source, path must be in the format 'database/collection'");
+    }
+
+    if (options.source && options.source !== IngestSourceType.File && options.source !== IngestSourceType.MongoDB) {
+      throw new Error(`invalid source type - ${options.source}`);
+    }
+
+    const queryParams: Record<string, string> = {
+      path,
+      source: options.source || IngestSourceType.File,
+    };
+
+    if (rows > 0) {
       queryParams.rows = rows.toString();
     }
-    if (skip !== undefined && skip > 0) {
+    if (skip > 0) {
       queryParams.skip = skip.toString();
+    }
+    if (options.source === IngestSourceType.MongoDB && options.mongo_filter) {
+      queryParams.mongo_filter = JSON.stringify(options.mongo_filter);
     }
 
     return this.doRequest<ReadDocumentResponse>(
@@ -76,6 +120,14 @@ export class DataMixin extends Client {
       undefined,
       queryParams
     );
+  }
+
+  /**
+   * Uploads a data file to the uploads storage which can be used for ingestion
+   */
+  async uploadDataFile(filename: string): Promise<GenericResponse> {
+    await this.doFileRequest("POST", "/api/data/v1/storage/upload", filename);
+    return { success: true, message: "Upload completed" };
   }
 
   /**

@@ -1,4 +1,4 @@
-import { ShilpClient } from "./dist/index.js";
+import { ShilpClient, StorageBackendType } from "./dist/index.js";
 
 async function main() {
   // Initialize the client
@@ -19,6 +19,8 @@ async function main() {
     // Create a new collection
     const createResp = await client.addCollection({
       name: "my-collection",
+      storage_type: StorageBackendType.File,
+      reference_storage_type: StorageBackendType.File,
     });
     console.log("Collection created:", createResp.success);
 

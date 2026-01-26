@@ -36,6 +36,8 @@ async function main() {
   // Create a new collection
   await client.addCollection({
     name: "my-collection",
+    storage_type: StorageBackendType.File,
+    reference_storage_type: StorageBackendType.File,
   });
 
   // Insert a record
@@ -97,7 +99,7 @@ console.log("Nodes:", nodes.data);
 const nodeInfo = await client.getCollectionNodeInfo(
   "my-collection",
   "title",
-  123
+  123,
 );
 console.log("Node info:", nodeInfo.data);
 
@@ -108,7 +110,7 @@ const neighbors = await client.getCollectionNodeNeighborsAtLevel(
   123,
   0,
   10,
-  0
+  0,
 );
 console.log("Neighbors:", neighbors.data);
 
@@ -117,14 +119,14 @@ const distance = await client.getCollectionDistance(
   "my-collection",
   "title",
   123,
-  "some text"
+  "some text",
 );
 console.log("Distance:", distance.data);
 
 // Get node by reference ID
 const refNode = await client.getCollectionNodeByReferenceNodeID(
   "my-collection",
-  456
+  456,
 );
 console.log("Reference node:", refNode.data);
 ```
@@ -151,13 +153,13 @@ console.log("Registered replica:", registerResp.message);
 // Get oplog status for a collection
 const status = await client.getOplogStatus("my-collection");
 console.log(
-  `Oplog status - Last LSN: ${status.last_lsn}, Retention LSN: ${status.retention_lsn}, Replicas: ${status.replica_count}`
+  `Oplog status - Last LSN: ${status.last_lsn}, Retention LSN: ${status.retention_lsn}, Replicas: ${status.replica_count}`,
 );
 
 // Get oplog entries after a specific LSN
 const entries = await client.getOplogEntries("my-collection", 1000, 100);
 console.log(
-  `Retrieved ${entries.count} oplog entries, last LSN: ${entries.last_lsn}`
+  `Retrieved ${entries.count} oplog entries, last LSN: ${entries.last_lsn}`,
 );
 
 // Get oplog entries for all collections
@@ -167,7 +169,7 @@ const allEntries = await client.getOplogEntries("", 1000, 100);
 const updateResp = await client.updateReplicaLSN(
   "my-collection",
   "replica-1",
-  1050
+  1050,
 );
 console.log(`Updated replica LSN: ${updateResp.success}`);
 ```

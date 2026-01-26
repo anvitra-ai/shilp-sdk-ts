@@ -15,7 +15,7 @@ function applyMixins(derivedCtor: any, constructors: any[]) {
         derivedCtor.prototype,
         name,
         Object.getOwnPropertyDescriptor(baseCtor.prototype, name) ||
-          Object.create(null)
+        Object.create(null)
       );
     });
   });
@@ -42,11 +42,12 @@ applyMixins(ShilpClient, [
 // Export the interface for the full client
 export interface ShilpClient
   extends CollectionsMixin,
-    DataMixin,
-    HealthMixin,
-    DebugMixin,
-    OplogMixin {}
+  DataMixin,
+  HealthMixin,
+  DebugMixin,
+  OplogMixin { }
 
 // Export all types
 export * from "./models";
 export { ClientOptions } from "./client";
+export { DiscoveryClient } from "./discovery_client";

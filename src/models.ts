@@ -25,6 +25,15 @@ export interface MetadataField {
 }
 
 /**
+ * Storage backend type
+ */
+export enum StorageBackendType {
+  DoesNotExist = -1,
+  File = 1,
+  S3 = 2,
+}
+
+/**
  * Metadata column schema
  */
 export interface MetadataColumnSchema {
@@ -43,6 +52,18 @@ export interface Collection {
   metadata?: MetadataColumnSchema[];
   has_metadata_enabled: boolean;
   no_reference_storage: boolean;
+  storage_type: StorageBackendType;
+  reference_storage_type: StorageBackendType;
+}
+
+/**
+ * Metadata support info
+ */
+export interface MetadataSupportInfo {
+  support_metadata: boolean;
+  name: string;
+  type: StorageBackendType;
+  is_default: boolean;
 }
 
 /**
@@ -52,7 +73,7 @@ export interface ListCollectionsResponse {
   success: boolean;
   message: string;
   data: Collection[];
-  support_metadata: boolean;
+  metadata_info: MetadataSupportInfo[];
 }
 
 /**
@@ -62,6 +83,8 @@ export interface AddCollectionRequest {
   name: string;
   no_reference_storage?: boolean;
   has_metadata_storage?: boolean;
+  storage_type?: StorageBackendType;
+  reference_storage_type?: StorageBackendType;
 }
 
 /**
@@ -101,10 +124,28 @@ export interface InsertRecordResponse {
 }
 
 /**
+ * Ingest source type
+ */
+export enum IngestSourceType {
+  File = "file",
+  MongoDB = "mongodb",
+}
+
+/**
  * Ingest request
  */
 export interface IngestRequest {
-  file_path: string;
+  // Source configuration - use either file_path OR MongoDB settings
+  file_path?: string;
+  source_type?: IngestSourceType;
+
+  // MongoDB source configuration
+  database_name?: string;
+  mongo_collection?: string;
+  query?: { [key: string]: any };
+  mongo_fetch_batch_size?: number;
+
+  // Common configuration
   collection_name: string;
   keyword_fields?: string[];
   metadata_fields?: { [key: string]: AttrType };
@@ -123,6 +164,25 @@ export interface IngestResponse {
   success: boolean;
   message: string;
   details?: string[];
+}
+
+/**
+ * List ingestion sources response
+ */
+export interface ListIngestionSourcesResponse {
+  message: string;
+  success: boolean;
+  data?: IngestSourceType[];
+}
+
+/**
+ * File reader options
+ */
+export interface FileReaderOptions {
+  source?: IngestSourceType;
+  mongo_filter?: { [key: string]: any };
+  skip?: number;
+  limit?: number;
 }
 
 /**
@@ -458,4 +518,77 @@ export interface GetOplogResponse {
   entries: OplogEntry[];
   last_lsn: number;
   count: number;
+}
+
+/**
+ * Replica information
+ */
+export interface Replica {
+  id: string;
+  address: string;
+  is_healthy: boolean;
+  is_syncing: boolean; // Traffic gate - if true, no traffic sent
+}
+
+/**
+ * Registry status
+ */
+export interface Status {
+  write_replica: Replica;
+  read_replicas: Replica[];
+  available_count: number;
+  total_count: number;
+}
+
+/**
+ * Proxy statistics
+ */
+export interface ProxyStats {
+  active_proxies: number;
+  targets: string[];
+}
+
+/**
+ * Discovery statistics
+ */
+export interface DiscoveryStats {
+  registry: Status;
+  proxy: ProxyStats;
+}
+
+/**
+ * Sync status
+ */
+export enum SyncStatus {
+  Ready = "ready",
+  Syncing = "syncing",
+}
+
+/**
+ * Update sync status request
+ */
+export interface UpdateSyncStatusRequest {
+  account_id: string;
+  address: string;
+  status: SyncStatus;
+}
+
+/**
+ * Register to discovery request
+ */
+export interface RegisterToDiscoveryRequest {
+  account_id: string;
+  address: string;
+  id: string;
+  is_read: boolean;
+  is_write: boolean;
+}
+
+/**
+ * Replica type
+ */
+export enum ReplicaType {
+  ReadReplica = 0,
+  WriteReplica = 1,
+  SingleNode = 2,
 }
