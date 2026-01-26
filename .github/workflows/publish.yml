@@ -34,4 +34,4 @@ jobs:
 
       - name: Publish to NPM
         # 2. Add the --provenance flag and remove the secret environment variable
-        run: npm publish --access public --provenance
+        run: npm publish
