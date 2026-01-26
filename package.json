@@ -34,9 +34,5 @@
   },
   "dependencies": {
     "form-data": "^4.0.5"
-  },
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
   }
 }
