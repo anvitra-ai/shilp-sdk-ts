@@ -110,6 +110,7 @@ export interface InsertRecordRequest {
   embedding_provider?: string;
   fields?: string[];
   keyword_fields?: string[];
+  vectors?: { [key: string]: number[] };
   model?: string;
 }
 
