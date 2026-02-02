@@ -32,6 +32,14 @@ export class DataMixin extends Client {
    * This method supports field-specific weights via the SearchRequest.weights field
    */
   async searchData(req: SearchRequest): Promise<SearchResponse> {
+    if (!req.collection) {
+      throw new Error("collection name cannot be empty");
+    }
+    if (!req.vector_query || req.vector_query.length === 0) {
+      if (!req.query) {
+        throw new Error("both vector_query and query cannot be empty");
+      }
+    }
     return this.doRequest<SearchResponse>("POST", "/api/data/v1/search", req);
   }
 
