@@ -35,7 +35,7 @@ export class DataMixin extends Client {
     if (!req.collection) {
       throw new Error("collection name cannot be empty");
     }
-    if ((!req.vector_query || req.vector_query.length === 0) && !req.query) {
+    if ((!req.vector_query || req.vector_query.length === 0) && (!req.query || req.query.length === 0)) {
       throw new Error("both vector_query and query cannot be empty");
     }
     return this.doRequest<SearchResponse>("POST", "/api/data/v1/search", req);
