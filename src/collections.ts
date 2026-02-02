@@ -140,6 +140,16 @@ export class CollectionsMixin extends Client {
   }
 
   /**
+   * Performs Product Quantization training for an existing collection
+   */
+  async pqTrain(collectionName: string): Promise<GenericResponse> {
+    return this.doRequest<GenericResponse>(
+      "POST",
+      `/api/collections/v1/${collectionName}/pq-train`
+    );
+  }
+
+  /**
    * Inserts a new record into a collection
    */
   async insertRecord(

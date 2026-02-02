@@ -54,6 +54,7 @@ export interface Collection {
   no_reference_storage: boolean;
   storage_type: StorageBackendType;
   reference_storage_type: StorageBackendType;
+  is_pq_enabled: boolean;
 }
 
 /**
@@ -85,6 +86,7 @@ export interface AddCollectionRequest {
   has_metadata_storage?: boolean;
   storage_type?: StorageBackendType;
   reference_storage_type?: StorageBackendType;
+  enable_pq?: boolean;
 }
 
 /**
@@ -252,6 +254,7 @@ export interface SearchRequest {
   max_distance?: number;
   filters?: CompoundFilter;
   sort?: CompoundSort;
+  vector_query?: number[];
 }
 
 /**
