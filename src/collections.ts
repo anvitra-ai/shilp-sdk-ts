@@ -1,10 +1,15 @@
 import { Client } from "./client";
+import * as http from "http";
+import * as https from "https";
+import { URL } from "url";
 import {
   ListCollectionsResponse,
   AddCollectionRequest,
   GenericResponse,
   InsertRecordRequest,
   InsertRecordResponse,
+  GetCollectionDataResponse,
+  GetCollectionSchemaResponse,
 } from "./models";
 
 /**
@@ -159,6 +164,68 @@ export class CollectionsMixin extends Client {
       "POST",
       "/api/collections/v1/record",
       req
+    );
+  }
+
+  /**
+   * Gets paginated data records from a collection
+   */
+  async getCollectionData(
+    collectionName: string,
+    offset: number,
+    limit: number
+  ): Promise<GetCollectionDataResponse> {
+    return this.doRequest<GetCollectionDataResponse>(
+      "GET",
+      `/api/collections/v1/${collectionName}/data`,
+      undefined,
+      { offset: offset.toString(), limit: limit.toString() }
+    );
+  }
+
+  /**
+   * Enables Natural Language Inference for a collection via SSE stream
+   * Returns an async generator that yields event strings
+   */
+  async *enableNli(
+    collectionName: string,
+    vertical: string
+  ): AsyncGenerator<string> {
+    const url = new URL(
+      `/api/collections/v1/${collectionName}/nli/enable?vertical=${encodeURIComponent(vertical)}`,
+      this.baseURL
+    );
+    const protocol = url.protocol === "https:" ? https : http;
+
+    const response = await new Promise<http.IncomingMessage>(
+      (resolve, reject) => {
+        const req = protocol.request(url, (res) => {
+          resolve(res);
+        });
+        req.on("error", reject);
+        req.end();
+      }
+    );
+
+    for await (const chunk of response) {
+      const lines = chunk.toString().split("\n");
+      for (const line of lines) {
+        if (line.trim()) {
+          yield line;
+        }
+      }
+    }
+  }
+
+  /**
+   * Gets the schema for a collection
+   */
+  async getCollectionSchema(
+    collectionName: string
+  ): Promise<GetCollectionSchemaResponse> {
+    return this.doRequest<GetCollectionSchemaResponse>(
+      "GET",
+      `/api/collections/v1/${collectionName}/schema`
     );
   }
 }

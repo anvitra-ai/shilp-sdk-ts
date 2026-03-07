@@ -34,6 +34,23 @@ export enum StorageBackendType {
 }
 
 /**
+ * Type of index for a collection field
+ */
+export enum IndexType {
+  HNSW = "hnsw",
+  Inverted = "inverted",
+  Metadata = "metadata",
+}
+
+/**
+ * Type of a schema attribute
+ */
+export enum AttributeType {
+  NUMERICAL = 1,
+  STRING = 2,
+}
+
+/**
  * Metadata column schema
  */
 export interface MetadataColumnSchema {
@@ -55,6 +72,9 @@ export interface Collection {
   storage_type: StorageBackendType;
   reference_storage_type: StorageBackendType;
   is_pq_enabled: boolean;
+  field_config?: { [key: string]: string };
+  is_nli_enabled?: boolean;
+  nli_domain?: string;
 }
 
 /**
@@ -75,6 +95,7 @@ export interface ListCollectionsResponse {
   message: string;
   data: Collection[];
   metadata_info: MetadataSupportInfo[];
+  is_nli_supported?: boolean;
 }
 
 /**
@@ -87,6 +108,88 @@ export interface AddCollectionRequest {
   storage_type?: StorageBackendType;
   reference_storage_type?: StorageBackendType;
   enable_pq?: boolean;
+}
+
+/**
+ * A single data record returned from getCollectionData
+ */
+export interface CollectionDataRecord {
+  id: string;
+  data: { [key: string]: any };
+  vectors?: { [key: string]: number[] };
+}
+
+/**
+ * Response for paginated collection data
+ */
+export interface GetCollectionDataResponse {
+  success: boolean;
+  message: string;
+  data: CollectionDataRecord[];
+  total?: number;
+}
+
+/**
+ * An attribute in a collection schema
+ */
+export interface Attribute {
+  name?: string;
+  type?: AttributeType;
+  index_type?: string;
+  is_metadata?: boolean;
+}
+
+/**
+ * A value in a category schema
+ */
+export interface CategoryValue {
+  value?: string;
+  count?: number;
+}
+
+/**
+ * Category schema for inverted-index fields
+ */
+export interface CategorySchema {
+  name?: string;
+  index_type?: string;
+  values?: CategoryValue[];
+  synonyms?: string[];
+}
+
+/**
+ * Schema of a collection
+ */
+export interface CollectionSchema {
+  attributes?: Attribute[];
+  value_schema?: CategorySchema[];
+}
+
+/**
+ * Response for getting a collection schema
+ */
+export interface GetCollectionSchemaResponse {
+  success: boolean;
+  message?: string;
+  data?: CollectionSchema;
+}
+
+/**
+ * Information about an NLI vertical
+ */
+export interface VerticalInfo {
+  name?: string;
+  label?: string;
+  is_native?: boolean;
+}
+
+/**
+ * Response for listing NLI verticals
+ */
+export interface ListNLIVerticalsResponse {
+  success: boolean;
+  data?: VerticalInfo[];
+  message?: string;
 }
 
 /**
@@ -255,6 +358,7 @@ export interface SearchRequest {
   filters?: CompoundFilter;
   sort?: CompoundSort;
   vector_query?: number[];
+  use_nli?: boolean;
 }
 
 /**
@@ -303,15 +407,21 @@ export interface HealthResponse {
 }
 
 /**
+ * Debug distance data
+ */
+export interface DebugDistanceData {
+  distance: number;
+  vector: number[];
+  custom_matcher_distance?: number;
+}
+
+/**
  * Debug distance response
  */
 export interface DebugDistanceResponse {
   success: boolean;
   message: string;
-  data: {
-    distance: number;
-    vector: number[];
-  };
+  data?: DebugDistanceData;
 }
 
 /**
@@ -397,6 +507,22 @@ export interface DebugReferenceNodeResponse {
   success: boolean;
   message: string;
   data: DebugReferenceNode | null;
+}
+
+/**
+ * Request to get embeddings for debug purposes
+ */
+export interface DebugGetEmbeddingsRequest {
+  texts: string[];
+}
+
+/**
+ * Response for getting debug embeddings
+ */
+export interface DebugGetEmbeddingsResponse {
+  success: boolean;
+  message?: string;
+  data?: { [key: string]: number[] };
 }
 
 /**

@@ -14,6 +14,7 @@ import {
   FileReaderOptions,
   IngestSourceType,
   GenericResponse,
+  ListNLIVerticalsResponse,
 } from "./models";
 
 /**
@@ -175,6 +176,16 @@ export class DataMixin extends Client {
     return this.doRequest<ListEmbeddingModelsResponse>(
       "GET",
       "/api/data/v1/embedding/models"
+    );
+  }
+
+  /**
+   * Lists all available NLI verticals
+   */
+  async listNliVerticals(): Promise<ListNLIVerticalsResponse> {
+    return this.doRequest<ListNLIVerticalsResponse>(
+      "GET",
+      "/api/data/v1/nli/verticals"
     );
   }
 }

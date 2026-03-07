@@ -5,6 +5,8 @@ import {
   DebugLevelsResponse,
   DebugNodesAtLevelResponse,
   DebugReferenceNodeResponse,
+  DebugGetEmbeddingsRequest,
+  DebugGetEmbeddingsResponse,
 } from "./models";
 
 /**
@@ -18,13 +20,18 @@ export class DebugMixin extends Client {
     collectionName: string,
     field: string,
     nodeID: number,
-    text: string
+    text: string,
+    customMatcherText?: string
   ): Promise<DebugDistanceResponse> {
+    const queryParams: Record<string, string> = { text };
+    if (customMatcherText !== undefined) {
+      queryParams.custom_matcher_text = customMatcherText;
+    }
     return this.doRequest<DebugDistanceResponse>(
       "GET",
       `/api/collections/v1/debug/${collectionName}/${field}/distance/${nodeID}`,
       undefined,
-      { text }
+      queryParams
     );
   }
 
@@ -104,6 +111,20 @@ export class DebugMixin extends Client {
     return this.doRequest<DebugReferenceNodeResponse>(
       "GET",
       `/api/collections/v1/debug/${collectionName}/nodes/reference_node/${nodeID}`
+    );
+  }
+
+  /**
+   * Gets embeddings for texts in a collection for debug purposes
+   */
+  async getCollectionEmbeddings(
+    collectionName: string,
+    req: DebugGetEmbeddingsRequest
+  ): Promise<DebugGetEmbeddingsResponse> {
+    return this.doRequest<DebugGetEmbeddingsResponse>(
+      "POST",
+      `/api/collections/v1/debug/${collectionName}/embedding`,
+      req
     );
   }
 }
