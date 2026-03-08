@@ -28,21 +28,21 @@ async function main() {
   // Drop collection if exists
 
   try {
-    await client.dropCollection("my-collection");
+    await client.dropCollection("my_collection");
   } catch (error) {
     console.error("Error dropping collection:", error);
   }
 
   // Create a new collection
   await client.addCollection({
-    name: "my-collection",
+    name: "my_collection",
     storage_type: StorageBackendType.File,
     reference_storage_type: StorageBackendType.File,
   });
 
   // Insert a record
   await client.insertRecord({
-    collection: "my-collection",
+    collection: "my_collection",
     id: "record-1",
     record: {
       title: "Hello World",
@@ -52,11 +52,11 @@ async function main() {
 
   // Flush collection in case you are using insert record.
   // Flush can be used post inserting the batch of records.
-  await client.flushCollection("my-collection");
+  await client.flushCollection("my_collection");
 
   // Search
   const results = await client.searchData({
-    collection: "my-collection",
+    collection: "my_collection",
     query: "Hello",
     fields: ["title"],
     limit: 10,
@@ -65,7 +65,7 @@ async function main() {
 
   // Advanced search with max distance filter
   const advancedResults = await client.searchData({
-    collection: "my-collection",
+    collection: "my_collection",
     query: "Hello",
     fields: ["title"],
     limit: 10,
@@ -73,7 +73,7 @@ async function main() {
   });
   console.log("Advanced search results:", advancedResults.data);
 
-  await client.dropCollection("my-collection");
+  await client.dropCollection("my_collection");
 }
 
 main();
@@ -85,19 +85,19 @@ The SDK also provides debug endpoints for inspecting collection internals:
 
 ```typescript
 // Re-index a collection
-await client.reIndexCollection("my-collection");
+await client.reIndexCollection("my_collection");
 
 // Get collection levels
-const levels = await client.getCollectionLevels("my-collection");
+const levels = await client.getCollectionLevels("my_collection");
 console.log("Levels:", levels.data);
 
 // Get nodes at a specific level
-const nodes = await client.getCollectionNodesAtLevel("my-collection", 0);
+const nodes = await client.getCollectionNodesAtLevel("my_collection", 0);
 console.log("Nodes:", nodes.data);
 
 // Get node information
 const nodeInfo = await client.getCollectionNodeInfo(
-  "my-collection",
+  "my_collection",
   "title",
   123,
 );
@@ -105,7 +105,7 @@ console.log("Node info:", nodeInfo.data);
 
 // Get neighbors of a node at a specific level
 const neighbors = await client.getCollectionNodeNeighborsAtLevel(
-  "my-collection",
+  "my_collection",
   "title",
   123,
   0,
@@ -116,7 +116,7 @@ console.log("Neighbors:", neighbors.data);
 
 // Get distance calculation
 const distance = await client.getCollectionDistance(
-  "my-collection",
+  "my_collection",
   "title",
   123,
   "some text",
@@ -125,7 +125,7 @@ console.log("Distance:", distance.data);
 
 // Get node by reference ID
 const refNode = await client.getCollectionNodeByReferenceNodeID(
-  "my-collection",
+  "my_collection",
   456,
 );
 console.log("Reference node:", refNode.data);
@@ -151,13 +151,13 @@ const registerResp = await client.registerReplica("replica-1");
 console.log("Registered replica:", registerResp.message);
 
 // Get oplog status for a collection
-const status = await client.getOplogStatus("my-collection");
+const status = await client.getOplogStatus("my_collection");
 console.log(
   `Oplog status - Last LSN: ${status.last_lsn}, Retention LSN: ${status.retention_lsn}, Replicas: ${status.replica_count}`,
 );
 
 // Get oplog entries after a specific LSN
-const entries = await client.getOplogEntries("my-collection", 1000, 100);
+const entries = await client.getOplogEntries("my_collection", 1000, 100);
 console.log(
   `Retrieved ${entries.count} oplog entries, last LSN: ${entries.last_lsn}`,
 );
@@ -167,7 +167,7 @@ const allEntries = await client.getOplogEntries("", 1000, 100);
 
 // Update replica LSN (heartbeat)
 const updateResp = await client.updateReplicaLSN(
-  "my-collection",
+  "my_collection",
   "replica-1",
   1050,
 );
