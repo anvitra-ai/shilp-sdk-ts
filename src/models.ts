@@ -14,14 +14,7 @@ export enum AttrType {
   Float64 = 1,
   String = 2,
   Bool = 3,
-}
-
-/**
- * Metadata field definition
- */
-export interface MetadataField {
-  name: string;
-  type: number;
+  Currency = 4,
 }
 
 /**
@@ -217,6 +210,12 @@ export interface InsertRecordRequest {
   keyword_fields?: string[];
   vectors?: { [key: string]: number[] };
   model?: string;
+  vector_config?: { [key: string]: VectorCreateConfig };
+  array_fields?: string[];
+}
+
+export interface VectorCreateConfig {
+  ef_construction: number;
 }
 
 /**
@@ -256,6 +255,8 @@ export interface IngestRequest {
   keyword_fields?: string[];
   metadata_fields?: { [key: string]: AttrType };
   fields: string[];
+  array_fields?: string[];
+  vector_config?: { [key: string]: VectorCreateConfig };
   id_field?: string;
   expiry_field?: string;
   embedding_provider?: string;
@@ -295,6 +296,7 @@ export interface FileReaderOptions {
  * Filter operations
  */
 export enum FilterOp {
+  Unknown = -1,
   Equals = 0,
   NotEquals = 1,
   GreaterThan = 2,
@@ -313,6 +315,7 @@ export interface FilterExpression {
   op?: FilterOp;
   value?: any;
   values?: any[];
+  filters?: CompoundFilter;
 }
 
 /**
@@ -320,6 +323,7 @@ export interface FilterExpression {
  */
 export interface CompoundFilter {
   and?: FilterExpression[];
+  or?: FilterExpression[];
 }
 
 /**
@@ -359,6 +363,89 @@ export interface SearchRequest {
   sort?: CompoundSort;
   vector_query?: number[];
   use_nli?: boolean;
+  field_config: { [key: string]: VectorSearchConfig };
+  vector_queries?: { [key: string]: number[] };
+}
+
+export interface VectorSearchConfig {
+  ef_search: number;
+}
+
+/**
+ * Token in query interpretation
+ */
+export interface Token {
+  text: string;
+  tag: string;
+  label: string;
+}
+
+/**
+ * Numerical value with unit conversion
+ */
+export interface NumericalValue {
+  unit: string;
+  base_value: number;
+  multiplier: number;
+  total_value: number;
+  original_text: string;
+}
+
+/**
+ * Filter operator for query interpretation
+ */
+export type FilterOperator =
+  | "EQ"
+  | "NEQ"
+  | "GT"
+  | "LT"
+  | "GTE"
+  | "LTE"
+  | "IN"
+  | "NOT IN";
+
+/**
+ * Vector query interpretation
+ */
+export interface VectorQuery {
+  resolved_by: string[];
+  vector_query: string;
+  vector_queries?: { [key: string]: string };
+  vector_confidences?: { [key: string]: number };
+}
+
+/**
+ * Filter in query interpretation
+ */
+export interface Filter {
+  resolved_by: string[];
+  attribute: Token[];
+  operation: Token;
+  operator: FilterOperator;
+  value: Token[];
+  is_numerical: boolean;
+  grounded: boolean;
+  numerical_value?: NumericalValue;
+}
+
+/**
+ * Value filter in query interpretation
+ */
+export interface ValueFilter {
+  resolved_by: string[];
+  attribute: Token[];
+  values: Token[][];
+  grounded: boolean;
+  operator: FilterOperator;
+}
+
+/**
+ * Query interpretation from NLI
+ */
+export interface Query {
+  vector_query: VectorQuery;
+  filters: Filter[];
+  value_filters: ValueFilter[];
 }
 
 /**
@@ -368,6 +455,7 @@ export interface SearchResponse {
   success: boolean;
   message: string;
   data: { [key: string]: any }[];
+  interpretation?: Query;
 }
 
 /**
@@ -413,6 +501,7 @@ export interface DebugDistanceData {
   distance: number;
   vector: number[];
   custom_matcher_distance?: number;
+  custom_matcher_vector?: number[];
 }
 
 /**
