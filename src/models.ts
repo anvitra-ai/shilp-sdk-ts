@@ -14,14 +14,7 @@ export enum AttrType {
   Float64 = 1,
   String = 2,
   Bool = 3,
-}
-
-/**
- * Metadata field definition
- */
-export interface MetadataField {
-  name: string;
-  type: number;
+  Currency = 4,
 }
 
 /**
@@ -31,6 +24,23 @@ export enum StorageBackendType {
   DoesNotExist = -1,
   File = 1,
   S3 = 2,
+}
+
+/**
+ * Type of index for a collection field
+ */
+export enum IndexType {
+  HNSW = "hnsw",
+  Inverted = "inverted",
+  Metadata = "metadata",
+}
+
+/**
+ * Type of a schema attribute
+ */
+export enum AttributeType {
+  NUMERICAL = 1,
+  STRING = 2,
 }
 
 /**
@@ -55,6 +65,9 @@ export interface Collection {
   storage_type: StorageBackendType;
   reference_storage_type: StorageBackendType;
   is_pq_enabled: boolean;
+  field_config?: { [key: string]: string };
+  is_nli_enabled?: boolean;
+  nli_domain?: string;
 }
 
 /**
@@ -75,6 +88,7 @@ export interface ListCollectionsResponse {
   message: string;
   data: Collection[];
   metadata_info: MetadataSupportInfo[];
+  is_nli_supported?: boolean;
 }
 
 /**
@@ -87,6 +101,88 @@ export interface AddCollectionRequest {
   storage_type?: StorageBackendType;
   reference_storage_type?: StorageBackendType;
   enable_pq?: boolean;
+}
+
+/**
+ * A single data record returned from getCollectionData
+ */
+export interface CollectionDataRecord {
+  id: string;
+  data: { [key: string]: any };
+  vectors?: { [key: string]: number[] };
+}
+
+/**
+ * Response for paginated collection data
+ */
+export interface GetCollectionDataResponse {
+  success: boolean;
+  message: string;
+  data: CollectionDataRecord[];
+  total?: number;
+}
+
+/**
+ * An attribute in a collection schema
+ */
+export interface Attribute {
+  name?: string;
+  type?: AttributeType;
+  index_type?: string;
+  is_metadata?: boolean;
+}
+
+/**
+ * A value in a category schema
+ */
+export interface CategoryValue {
+  value?: string;
+  count?: number;
+}
+
+/**
+ * Category schema for inverted-index fields
+ */
+export interface CategorySchema {
+  name?: string;
+  index_type?: string;
+  values?: CategoryValue[];
+  synonyms?: string[];
+}
+
+/**
+ * Schema of a collection
+ */
+export interface CollectionSchema {
+  attributes?: Attribute[];
+  value_schema?: CategorySchema[];
+}
+
+/**
+ * Response for getting a collection schema
+ */
+export interface GetCollectionSchemaResponse {
+  success: boolean;
+  message?: string;
+  data?: CollectionSchema;
+}
+
+/**
+ * Information about an NLI vertical
+ */
+export interface VerticalInfo {
+  name?: string;
+  label?: string;
+  is_native?: boolean;
+}
+
+/**
+ * Response for listing NLI verticals
+ */
+export interface ListNLIVerticalsResponse {
+  success: boolean;
+  data?: VerticalInfo[];
+  message?: string;
 }
 
 /**
@@ -114,6 +210,12 @@ export interface InsertRecordRequest {
   keyword_fields?: string[];
   vectors?: { [key: string]: number[] };
   model?: string;
+  vector_config?: { [key: string]: VectorCreateConfig };
+  array_fields?: string[];
+}
+
+export interface VectorCreateConfig {
+  ef_construction: number;
 }
 
 /**
@@ -153,6 +255,8 @@ export interface IngestRequest {
   keyword_fields?: string[];
   metadata_fields?: { [key: string]: AttrType };
   fields: string[];
+  array_fields?: string[];
+  vector_config?: { [key: string]: VectorCreateConfig };
   id_field?: string;
   expiry_field?: string;
   embedding_provider?: string;
@@ -192,6 +296,7 @@ export interface FileReaderOptions {
  * Filter operations
  */
 export enum FilterOp {
+  Unknown = -1,
   Equals = 0,
   NotEquals = 1,
   GreaterThan = 2,
@@ -210,6 +315,7 @@ export interface FilterExpression {
   op?: FilterOp;
   value?: any;
   values?: any[];
+  filters?: CompoundFilter;
 }
 
 /**
@@ -217,6 +323,7 @@ export interface FilterExpression {
  */
 export interface CompoundFilter {
   and?: FilterExpression[];
+  or?: FilterExpression[];
 }
 
 /**
@@ -255,6 +362,90 @@ export interface SearchRequest {
   filters?: CompoundFilter;
   sort?: CompoundSort;
   vector_query?: number[];
+  use_nli?: boolean;
+  field_config: { [key: string]: VectorSearchConfig };
+  vector_queries?: { [key: string]: number[] };
+}
+
+export interface VectorSearchConfig {
+  ef_search: number;
+}
+
+/**
+ * Token in query interpretation
+ */
+export interface Token {
+  text: string;
+  tag: string;
+  label: string;
+}
+
+/**
+ * Numerical value with unit conversion
+ */
+export interface NumericalValue {
+  unit: string;
+  base_value: number;
+  multiplier: number;
+  total_value: number;
+  original_text: string;
+}
+
+/**
+ * Filter operator for query interpretation
+ */
+export type FilterOperator =
+  | "EQ"
+  | "NEQ"
+  | "GT"
+  | "LT"
+  | "GTE"
+  | "LTE"
+  | "IN"
+  | "NOT IN";
+
+/**
+ * Vector query interpretation
+ */
+export interface VectorQuery {
+  resolved_by: string[];
+  vector_query: string;
+  vector_queries?: { [key: string]: string };
+  vector_confidences?: { [key: string]: number };
+}
+
+/**
+ * Filter in query interpretation
+ */
+export interface Filter {
+  resolved_by: string[];
+  attribute: Token[];
+  operation: Token;
+  operator: FilterOperator;
+  value: Token[];
+  is_numerical: boolean;
+  grounded: boolean;
+  numerical_value?: NumericalValue;
+}
+
+/**
+ * Value filter in query interpretation
+ */
+export interface ValueFilter {
+  resolved_by: string[];
+  attribute: Token[];
+  values: Token[][];
+  grounded: boolean;
+  operator: FilterOperator;
+}
+
+/**
+ * Query interpretation from NLI
+ */
+export interface Query {
+  vector_query: VectorQuery;
+  filters: Filter[];
+  value_filters: ValueFilter[];
 }
 
 /**
@@ -264,6 +455,7 @@ export interface SearchResponse {
   success: boolean;
   message: string;
   data: { [key: string]: any }[];
+  interpretation?: Query;
 }
 
 /**
@@ -303,15 +495,22 @@ export interface HealthResponse {
 }
 
 /**
+ * Debug distance data
+ */
+export interface DebugDistanceData {
+  distance: number;
+  vector: number[];
+  custom_matcher_distance?: number;
+  custom_matcher_vector?: number[];
+}
+
+/**
  * Debug distance response
  */
 export interface DebugDistanceResponse {
   success: boolean;
   message: string;
-  data: {
-    distance: number;
-    vector: number[];
-  };
+  data?: DebugDistanceData;
 }
 
 /**
@@ -397,6 +596,22 @@ export interface DebugReferenceNodeResponse {
   success: boolean;
   message: string;
   data: DebugReferenceNode | null;
+}
+
+/**
+ * Request to get embeddings for debug purposes
+ */
+export interface DebugGetEmbeddingsRequest {
+  texts: string[];
+}
+
+/**
+ * Response for getting debug embeddings
+ */
+export interface DebugGetEmbeddingsResponse {
+  success: boolean;
+  message?: string;
+  data?: { [key: string]: number[] };
 }
 
 /**
