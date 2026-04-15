@@ -13,6 +13,7 @@ import {
   ListIngestionSourcesResponse,
   FileReaderOptions,
   IngestSourceType,
+  FuzzyAlgo,
   GenericResponse,
   ListNLIVerticalsResponse,
 } from "./models";
@@ -38,6 +39,13 @@ export class DataMixin extends Client {
     }
     if ((!req.vector_query || req.vector_query.length === 0) && (!req.query || req.query.length === 0)) {
       throw new Error("both vector_query and query cannot be empty");
+    }
+    if (
+      req.fuzzy_algo &&
+      req.fuzzy_algo !== FuzzyAlgo.Levenshtein &&
+      req.fuzzy_algo !== FuzzyAlgo.JaroWinkler
+    ) {
+      throw new Error(`invalid fuzzy algorithm - ${req.fuzzy_algo}`);
     }
     return this.doRequest<SearchResponse>("POST", "/api/data/v1/search", req);
   }
@@ -102,7 +110,12 @@ export class DataMixin extends Client {
       throw new Error("for mongodb source, path must be in the format 'database/collection'");
     }
 
-    if (options.source && options.source !== IngestSourceType.File && options.source !== IngestSourceType.MongoDB) {
+    if (
+      options.source &&
+      options.source !== IngestSourceType.File &&
+      options.source !== IngestSourceType.MongoDB &&
+      options.source !== IngestSourceType.Anvitra
+    ) {
       throw new Error(`invalid source type - ${options.source}`);
     }
 
@@ -150,9 +163,15 @@ export class DataMixin extends Client {
 
     const response = await new Promise<http.IncomingMessage>(
       (resolve, reject) => {
-        const req = protocol.request(url, (res) => {
-          resolve(res);
-        });
+        const req = protocol.request(
+          url,
+          {
+            headers: this.getAuthorizationHeader(),
+          },
+          (res) => {
+            resolve(res);
+          }
+        );
 
         req.on("error", reject);
         req.end();

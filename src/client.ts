@@ -11,6 +11,7 @@ export interface ClientOptions {
   timeout?: number;
   httpAgent?: http.Agent;
   httpsAgent?: https.Agent;
+  authToken?: string;
 }
 
 /**
@@ -21,6 +22,7 @@ export class Client {
   private timeout: number;
   private httpAgent?: http.Agent;
   private httpsAgent?: https.Agent;
+  private authToken?: string;
 
   /**
    * Creates a new Shilp API client
@@ -32,6 +34,21 @@ export class Client {
     this.timeout = options?.timeout || 30000;
     this.httpAgent = options?.httpAgent;
     this.httpsAgent = options?.httpsAgent;
+    this.authToken = options?.authToken;
+  }
+
+  /**
+   * Sets the auth token used in Authorization headers.
+   */
+  setAuthToken(token: string): void {
+    this.authToken = token;
+  }
+
+  /**
+   * Returns the authorization header map.
+   */
+  protected getAuthorizationHeader(): Record<string, string> {
+    return this.authToken ? { Authorization: `Bearer ${this.authToken}` } : {};
   }
 
   /**
@@ -61,6 +78,7 @@ export class Client {
         agent,
         headers: {
           "Content-Type": "application/json",
+          ...this.getAuthorizationHeader(),
         },
       };
 
@@ -125,7 +143,10 @@ export class Client {
         method,
         timeout: this.timeout,
         agent,
-        headers: form.getHeaders(),
+        headers: {
+          ...form.getHeaders(),
+          ...this.getAuthorizationHeader(),
+        },
       };
 
       const req = protocol.request(url, options, (res) => {
@@ -186,6 +207,7 @@ export class Client {
         agent,
         headers: {
           "Content-Type": "application/json",
+          ...this.getAuthorizationHeader(),
         },
       };
 

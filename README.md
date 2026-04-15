@@ -11,11 +11,18 @@ npm install @anvitra-ai/shilp-sdk-ts
 ## Usage
 
 ```typescript
-import { ShilpClient } from "@anvitra-ai/shilp-sdk-ts";
+import {
+  ShilpClient,
+  StorageBackendType,
+  FuzzyAlgo,
+  AttrType,
+} from "@anvitra-ai/shilp-sdk-ts";
 
 async function main() {
   // Initialize the client
-  const client = new ShilpClient("http://localhost:3000");
+  const client = new ShilpClient("http://localhost:3000", {
+    authToken: "your-jwt-token",
+  });
 
   // Check health
   const health = await client.healthCheck();
@@ -70,8 +77,18 @@ async function main() {
     fields: ["title"],
     limit: 10,
     max_distance: 0.5,
+    fuzzy_algo: FuzzyAlgo.Levenshtein,
   });
   console.log("Advanced search results:", advancedResults.data);
+
+  // Enable metadata indexing for existing collection data
+  await client.enableMetadataStore("my_collection", {
+    fields: [{ name: "brand", type: AttrType.String }],
+  });
+
+  // Settings API
+  const settings = await client.getSettings();
+  console.log("Settings:", settings.data);
 
   await client.dropCollection("my_collection");
 }
@@ -133,11 +150,12 @@ console.log("Reference node:", refNode.data);
 
 ## Features
 
-- Collection Management (List, Add, Drop, Rename, Load, Unload, Flush, ReIndex)
-- Data Ingestion & Search (with keyword fields support)
+- Collection Management (List, Add, Drop, Rename, Load, Unload, Flush, ReIndex, Metadata Enable)
+- Data Ingestion & Search (with keyword fields support, fuzzy algorithm selection)
 - Record Management (Insert, Delete, Expiry Cleanup)
 - Debug Collection Operations (Distance, Node Info, Levels, Neighbors)
 - Oplog Operations (Replica Registration, Heartbeat, Get Entries, Status)
+- Settings Management (get, update, providers)
 - Storage Listing
 - Health Check
 
