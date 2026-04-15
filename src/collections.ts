@@ -10,6 +10,8 @@ import {
   InsertRecordResponse,
   GetCollectionDataResponse,
   GetCollectionSchemaResponse,
+  EnableMetadataStoreRequest,
+  EnableMetadataStoreResponse,
 } from "./models";
 
 /**
@@ -199,9 +201,15 @@ export class CollectionsMixin extends Client {
 
     const response = await new Promise<http.IncomingMessage>(
       (resolve, reject) => {
-        const req = protocol.request(url, (res) => {
-          resolve(res);
-        });
+        const req = protocol.request(
+          url,
+          {
+            headers: this.getAuthorizationHeader(),
+          },
+          (res) => {
+            resolve(res);
+          }
+        );
         req.on("error", reject);
         req.end();
       }
@@ -226,6 +234,20 @@ export class CollectionsMixin extends Client {
     return this.doRequest<GetCollectionSchemaResponse>(
       "GET",
       `/api/collections/v1/${collectionName}/schema`
+    );
+  }
+
+  /**
+   * Enables metadata store for a collection
+   */
+  async enableMetadataStore(
+    collectionName: string,
+    req: EnableMetadataStoreRequest
+  ): Promise<EnableMetadataStoreResponse> {
+    return this.doRequest<EnableMetadataStoreResponse>(
+      "POST",
+      `/api/collections/v1/${collectionName}/metadata/enable`,
+      req
     );
   }
 }

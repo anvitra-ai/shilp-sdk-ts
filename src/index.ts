@@ -4,6 +4,7 @@ import { DataMixin } from "./data";
 import { HealthMixin } from "./health";
 import { DebugMixin } from "./debug";
 import { OplogMixin } from "./oplog";
+import { SettingsMixin } from "./settings";
 
 /**
  * Apply mixins to create the full Shilp client
@@ -37,6 +38,7 @@ applyMixins(ShilpClient, [
   HealthMixin,
   DebugMixin,
   OplogMixin,
+  SettingsMixin,
 ]);
 
 // Export the interface for the full client
@@ -45,7 +47,8 @@ export interface ShilpClient
   DataMixin,
   HealthMixin,
   DebugMixin,
-  OplogMixin { }
+  OplogMixin,
+  SettingsMixin { }
 
 // Export all types
 export * from "./models";

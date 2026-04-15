@@ -52,6 +52,22 @@ export interface MetadataColumnSchema {
 }
 
 /**
+ * Enable metadata store request
+ */
+export interface EnableMetadataStoreRequest {
+  fields?: MetadataColumnSchema[];
+}
+
+/**
+ * Enable metadata store response
+ */
+export interface EnableMetadataStoreResponse {
+  success: boolean;
+  message: string;
+  records_indexed?: number;
+}
+
+/**
  * Collection representation
  */
 export interface Collection {
@@ -68,6 +84,7 @@ export interface Collection {
   field_config?: { [key: string]: string };
   is_nli_enabled?: boolean;
   nli_domain?: string;
+  total_no_of_documents: number;
 }
 
 /**
@@ -234,6 +251,7 @@ export interface InsertRecordResponse {
 export enum IngestSourceType {
   File = "file",
   MongoDB = "mongodb",
+  Anvitra = "anvitra",
 }
 
 /**
@@ -365,6 +383,12 @@ export interface SearchRequest {
   use_nli?: boolean;
   field_config: { [key: string]: VectorSearchConfig };
   vector_queries?: { [key: string]: number[] };
+  fuzzy_algo?: FuzzyAlgo;
+}
+
+export enum FuzzyAlgo {
+  Levenshtein = "levenshtein",
+  JaroWinkler = "jaro_winkler",
 }
 
 export interface VectorSearchConfig {
@@ -456,6 +480,18 @@ export interface SearchResponse {
   message: string;
   data: { [key: string]: any }[];
   interpretation?: Query;
+  timing?: SearchTiming;
+}
+
+/**
+ * Search timing breakdown (milliseconds)
+ */
+export interface SearchTiming {
+  interpretation_ms?: number;
+  embedding_ms?: number;
+  metadata_filter_ms?: number;
+  search_ms?: number;
+  total_ms: number;
 }
 
 /**
@@ -810,4 +846,80 @@ export enum ReplicaType {
   ReadReplica = 0,
   WriteReplica = 1,
   SingleNode = 2,
+}
+
+export interface GetSettingsResponse {
+  success: boolean;
+  message: string;
+  data?: Settings;
+}
+
+export interface Settings {
+  auth: SettingsAuth;
+  allowedOrigins?: string[];
+  integrations?: SettingsIntegration[];
+}
+
+export interface SettingsAuth {
+  enable: boolean;
+  tested: boolean;
+  name?: string;
+  arguments?: ProviderArgumentValue[];
+  apiAuthConfig?: APIAuthConfig;
+}
+
+export interface APIAuthConfig {
+  search: boolean;
+  collections: boolean;
+  data: boolean;
+  explore: boolean;
+  oplog: boolean;
+}
+
+export interface ProviderArgumentValue {
+  key: string;
+  value: string;
+  is_secret?: boolean;
+}
+
+export interface SettingsIntegration {
+  enable: boolean;
+  name?: string;
+  arguments?: ProviderArgumentValue[];
+}
+
+export interface SettingsUpdateRequest {
+  auth?: SettingsAuth;
+  tested?: boolean;
+  authConfig?: SettingsAuth;
+  allowedOrigins?: string[];
+  integration?: { [key: string]: SettingsIntegration };
+}
+
+export interface SettingsAvailableProvidersData {
+  auth?: SettingsProviderInfo[];
+  integrations?: SettingsProviderInfo[];
+}
+
+export interface SettingsAvailableProvidersResponse {
+  success: boolean;
+  message: string;
+  data?: SettingsAvailableProvidersData;
+}
+
+export interface SettingsProviderArguments {
+  label: string;
+  description: string;
+  is_secret?: boolean;
+}
+
+export enum SettingsProviderType {
+  Auth = "auth",
+  DataSource = "data-source",
+}
+
+export interface SettingsProviderInfo {
+  name: string;
+  type: SettingsProviderType;
+  arguments?: SettingsProviderArguments[];
 }
