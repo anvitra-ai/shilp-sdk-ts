@@ -185,12 +185,22 @@ export interface GetCollectionSchemaResponse {
 }
 
 /**
+ * Information about an NLI model
+ */
+export interface NLIModelInfo {
+  name?: string;
+  version?: string;
+}
+
+/**
  * Information about an NLI vertical
  */
 export interface VerticalInfo {
   name?: string;
   label?: string;
+  models?: NLIModelInfo[];
   is_native?: boolean;
+  version?: string;
 }
 
 /**
@@ -922,4 +932,89 @@ export interface SettingsProviderInfo {
   name: string;
   type: SettingsProviderType;
   arguments?: SettingsProviderArguments[];
+}
+
+/**
+ * Model type enum
+ */
+export enum ModelType {
+  Collection = "collection",
+  Vertical = "vertical",
+}
+
+/**
+ * Model information
+ */
+export interface Model {
+  id: string;
+  project_id: string;
+  name: string;
+  description: string;
+  collection: string;
+  version: string;
+  model_type: ModelType;
+  status: string;
+  supported_version: string;
+  labels: string[];
+  embedding_dim: number;
+  mode: string;
+  label_field: string;
+  num_samples: number;
+  skipped: number;
+  label_grouping: { [key: string]: string[] };
+  classifier_selection_strategy: { [key: string]: any };
+  file_path: string;
+  file_size: number;
+  enabled: boolean;
+  created_at: any;
+  updated_at: any;
+  deleted_at: any;
+}
+
+/**
+ * Collection model information
+ */
+export interface CollectionModel {
+  collection: string;
+  models: Model[];
+  upgrade_available: boolean;
+}
+
+/**
+ * List collection models response
+ */
+export interface ListCollectionsModelsResponse {
+  success: boolean;
+  data: CollectionModel[];
+  message: string;
+}
+
+/**
+ * Update models event (for streaming updates)
+ */
+export interface UpdateModelsEvent {
+  status: string; // "updating", "success", "error", "complete"
+  message: string; // Human-readable message
+  field: string; // Model field being updated
+  total: number; // Total models to update
+  current: number; // Current model number
+  error?: string; // Error message if status is "error"
+}
+
+/**
+ * Get collection model response
+ */
+export interface GetCollectionModelResponse {
+  success: boolean;
+  data: Model | null;
+  message: string;
+}
+
+/**
+ * Get model response
+ */
+export interface GetModelResponse {
+  success: boolean;
+  data: Model | null;
+  message: string;
 }

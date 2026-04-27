@@ -12,6 +12,9 @@ import {
   GetCollectionSchemaResponse,
   EnableMetadataStoreRequest,
   EnableMetadataStoreResponse,
+  ListCollectionsModelsResponse,
+  GetCollectionModelResponse,
+  UpdateModelsEvent,
 } from "./models";
 
 /**
@@ -249,5 +252,94 @@ export class CollectionsMixin extends Client {
       `/api/collections/v1/${collectionName}/metadata/enable`,
       req
     );
+  }
+
+  /**
+   * Lists all collection models
+   */
+  async listCollectionModels(): Promise<ListCollectionsModelsResponse> {
+    return this.doRequest<ListCollectionsModelsResponse>(
+      "GET",
+      "/api/collections/v1/models"
+    );
+  }
+
+  /**
+   * Gets information about a specific model in a collection
+   */
+  async getCollectionModelInfo(
+    collectionName: string,
+    modelId: string
+  ): Promise<GetCollectionModelResponse> {
+    return this.doRequest<GetCollectionModelResponse>(
+      "GET",
+      `/api/collections/v1/${collectionName}/models/${modelId}`
+    );
+  }
+
+  /**
+   * Updates collection models via SSE stream
+   * Returns an async generator that yields UpdateModelsEvent objects
+   * Note: Uses GET method as this is a server-sent events endpoint that streams
+   * update progress, not an endpoint that modifies data
+   */
+  async *updateCollectionModel(
+    collectionName: string
+  ): AsyncGenerator<UpdateModelsEvent> {
+    const url = new URL(
+      `/api/collections/v1/${collectionName}/models/update`,
+      this.baseURL
+    );
+    const protocol = url.protocol === "https:" ? https : http;
+
+    const response = await new Promise<http.IncomingMessage>(
+      (resolve, reject) => {
+        const options: http.RequestOptions = {
+          method: "GET",
+          headers: this.getAuthorizationHeader(),
+        };
+        const req = protocol.request(url, options, (res) => {
+          resolve(res);
+        });
+        req.on("error", reject);
+        req.end();
+      }
+    );
+
+    let buffer = "";
+    for await (const chunk of response) {
+      buffer += chunk.toString();
+      const lines = buffer.split("\n");
+      
+      // Keep the last incomplete line in the buffer
+      buffer = lines.pop() || "";
+      
+      for (const line of lines) {
+        if (line.trim()) {
+          try {
+            const event = JSON.parse(line) as UpdateModelsEvent;
+            // Validate that required fields exist
+            if (typeof event.status === "string" && typeof event.message === "string") {
+              yield event;
+            }
+          } catch (err) {
+            // Skip malformed lines
+            continue;
+          }
+        }
+      }
+    }
+    
+    // Process any remaining data in buffer
+    if (buffer.trim()) {
+      try {
+        const event = JSON.parse(buffer) as UpdateModelsEvent;
+        if (typeof event.status === "string" && typeof event.message === "string") {
+          yield event;
+        }
+      } catch (err) {
+        // Skip malformed final line
+      }
+    }
   }
 }
