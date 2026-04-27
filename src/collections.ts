@@ -12,6 +12,9 @@ import {
   GetCollectionSchemaResponse,
   EnableMetadataStoreRequest,
   EnableMetadataStoreResponse,
+  ListCollectionsModelsResponse,
+  GetCollectionModelResponse,
+  UpdateModelsEvent,
 } from "./models";
 
 /**
@@ -249,5 +252,73 @@ export class CollectionsMixin extends Client {
       `/api/collections/v1/${collectionName}/metadata/enable`,
       req
     );
+  }
+
+  /**
+   * Lists all collection models
+   */
+  async listCollectionModels(): Promise<ListCollectionsModelsResponse> {
+    return this.doRequest<ListCollectionsModelsResponse>(
+      "GET",
+      "/api/collections/v1/models"
+    );
+  }
+
+  /**
+   * Gets information about a specific model in a collection
+   */
+  async getCollectionModelInfo(
+    collectionName: string,
+    modelId: string
+  ): Promise<GetCollectionModelResponse> {
+    return this.doRequest<GetCollectionModelResponse>(
+      "GET",
+      `/api/collections/v1/${collectionName}/models/${modelId}`
+    );
+  }
+
+  /**
+   * Updates collection models via SSE stream
+   * Returns an async generator that yields UpdateModelsEvent objects
+   */
+  async *updateCollectionModel(
+    collectionName: string
+  ): AsyncGenerator<UpdateModelsEvent> {
+    const url = new URL(
+      `/api/collections/v1/${collectionName}/models/update`,
+      this.baseURL
+    );
+    const protocol = url.protocol === "https:" ? https : http;
+
+    const response = await new Promise<http.IncomingMessage>(
+      (resolve, reject) => {
+        const req = protocol.request(
+          url,
+          {
+            headers: this.getAuthorizationHeader(),
+          },
+          (res) => {
+            resolve(res);
+          }
+        );
+        req.on("error", reject);
+        req.end();
+      }
+    );
+
+    for await (const chunk of response) {
+      const lines = chunk.toString().split("\n");
+      for (const line of lines) {
+        if (line.trim()) {
+          try {
+            const event = JSON.parse(line) as UpdateModelsEvent;
+            yield event;
+          } catch (err) {
+            // Skip malformed lines
+            continue;
+          }
+        }
+      }
+    }
   }
 }
