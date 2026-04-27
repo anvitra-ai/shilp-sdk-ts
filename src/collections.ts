@@ -295,7 +295,7 @@ export class CollectionsMixin extends Client {
     const response = await new Promise<http.IncomingMessage>(
       (resolve, reject) => {
         const options: http.RequestOptions = {
-          method: "GET",
+          method: "POST",
           headers: this.getAuthorizationHeader(),
         };
         const req = protocol.request(url, options, (res) => {
@@ -310,10 +310,10 @@ export class CollectionsMixin extends Client {
     for await (const chunk of response) {
       buffer += chunk.toString();
       const lines = buffer.split("\n");
-      
+
       // Keep the last incomplete line in the buffer
       buffer = lines.pop() || "";
-      
+
       for (const line of lines) {
         if (line.trim()) {
           try {
@@ -329,7 +329,7 @@ export class CollectionsMixin extends Client {
         }
       }
     }
-    
+
     // Process any remaining data in buffer
     if (buffer.trim()) {
       try {
