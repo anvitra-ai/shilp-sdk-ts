@@ -315,30 +315,40 @@ export class CollectionsMixin extends Client {
       buffer = lines.pop() || "";
 
       for (const line of lines) {
-        if (line.trim()) {
-          try {
-            const event = JSON.parse(line) as UpdateModelsEvent;
-            // Validate that required fields exist
-            if (typeof event.status === "string" && typeof event.message === "string") {
-              yield event;
+        const trimmedLine = line.trim();
+        if (trimmedLine) {
+          // SSE format: data: {"status":"updating",...}
+          if (trimmedLine.startsWith("data: ")) {
+            try {
+              const jsonData = trimmedLine.substring(6); // Remove "data: " prefix
+              const event = JSON.parse(jsonData) as UpdateModelsEvent;
+              // Validate that required fields exist
+              if (typeof event.status === "string" && typeof event.message === "string") {
+                yield event;
+              }
+            } catch (err) {
+              // Skip malformed data lines
+              continue;
             }
-          } catch (err) {
-            // Skip malformed lines
-            continue;
           }
+          // Ignore "event: message" lines and other non-data lines
         }
       }
     }
 
     // Process any remaining data in buffer
     if (buffer.trim()) {
-      try {
-        const event = JSON.parse(buffer) as UpdateModelsEvent;
-        if (typeof event.status === "string" && typeof event.message === "string") {
-          yield event;
+      const trimmedBuffer = buffer.trim();
+      if (trimmedBuffer.startsWith("data: ")) {
+        try {
+          const jsonData = trimmedBuffer.substring(6); // Remove "data: " prefix
+          const event = JSON.parse(jsonData) as UpdateModelsEvent;
+          if (typeof event.status === "string" && typeof event.message === "string") {
+            yield event;
+          }
+        } catch (err) {
+          // Skip malformed final line
         }
-      } catch (err) {
-        // Skip malformed final line
       }
     }
   }
