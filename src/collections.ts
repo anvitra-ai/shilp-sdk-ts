@@ -292,32 +292,51 @@ export class CollectionsMixin extends Client {
 
     const response = await new Promise<http.IncomingMessage>(
       (resolve, reject) => {
-        const req = protocol.request(
-          url,
-          {
-            headers: this.getAuthorizationHeader(),
-          },
-          (res) => {
-            resolve(res);
-          }
-        );
+        const options: http.RequestOptions = {
+          method: "GET",
+          headers: this.getAuthorizationHeader(),
+        };
+        const req = protocol.request(url, options, (res) => {
+          resolve(res);
+        });
         req.on("error", reject);
         req.end();
       }
     );
 
+    let buffer = "";
     for await (const chunk of response) {
-      const lines = chunk.toString().split("\n");
+      buffer += chunk.toString();
+      const lines = buffer.split("\n");
+      
+      // Keep the last incomplete line in the buffer
+      buffer = lines.pop() || "";
+      
       for (const line of lines) {
         if (line.trim()) {
           try {
             const event = JSON.parse(line) as UpdateModelsEvent;
-            yield event;
+            // Validate that required fields exist
+            if (typeof event.status === "string" && typeof event.message === "string") {
+              yield event;
+            }
           } catch (err) {
             // Skip malformed lines
             continue;
           }
         }
+      }
+    }
+    
+    // Process any remaining data in buffer
+    if (buffer.trim()) {
+      try {
+        const event = JSON.parse(buffer) as UpdateModelsEvent;
+        if (typeof event.status === "string" && typeof event.message === "string") {
+          yield event;
+        }
+      } catch (err) {
+        // Skip malformed final line
       }
     }
   }
