@@ -280,6 +280,8 @@ export class CollectionsMixin extends Client {
   /**
    * Updates collection models via SSE stream
    * Returns an async generator that yields UpdateModelsEvent objects
+   * Note: Uses GET method as this is a server-sent events endpoint that streams
+   * update progress, not an endpoint that modifies data
    */
   async *updateCollectionModel(
     collectionName: string
